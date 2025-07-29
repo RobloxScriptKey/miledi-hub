@@ -36,7 +36,7 @@ gui.ResetOnSpawn = false
 gui.Parent = game:GetService("CoreGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 400, 0, 240)
+frame.Size = UDim2.new(0, 400, 0, 260)
 frame.Position = UDim2.new(0.5, 0, 0.4, 0)
 frame.AnchorPoint = Vector2.new(0.5, 0.5)
 frame.BackgroundColor3 = Color3.fromRGB(120, 140, 255)
@@ -50,6 +50,43 @@ grad.Color = ColorSequence.new{
 grad.Rotation = 45
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 20)
 
+-- Двигаем GUI (телефон + ПК)
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+	                           startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- Контент GUI
 local logo = Instance.new("TextLabel", frame)
 logo.Size = UDim2.new(0, 40, 0, 40)
 logo.Position = UDim2.new(0, 10, 0, 10)
@@ -118,6 +155,7 @@ copyFeedback.TextSize = 16
 
 TweenService:Create(frame, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
 
+-- Проверка ключа
 button.MouseButton1Click:Connect(function()
 	local input = box.Text:match("^%s*(.-)%s*$")
 	if input == validKey then
@@ -132,6 +170,7 @@ button.MouseButton1Click:Connect(function()
 	end
 end)
 
+-- Копирование ссылки
 getKeyButton.MouseButton1Click:Connect(function()
 	local link = "https://playerok.com/profile/MILEDI-STORE/products"
 	setclipboard(link)
@@ -142,6 +181,7 @@ getKeyButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
+-- Закрытие по ESC
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if not gpe and input.KeyCode == Enum.KeyCode.Escape then
 		gui:Destroy()
